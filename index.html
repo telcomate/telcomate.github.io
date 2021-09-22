@@ -1,10 +1,164 @@
 <html>
-    <head>
-        <meta http-equiv='cache-control' content='no-cache'> 
-        <meta http-equiv='expires' content='0'> 
-        <meta http-equiv='pragma' content='no-cache'>
-    </head>
 <body>
-test test3
+    <audio id="remoteAudio"></audio>
+    <audio id="localAudio" muted="muted"></audio>
+    <table width="100%"><tr>
+    <td>
+    <h1>Are you the offerer?</h1>
+    <button onclick="
+      document.getElementById('localSdpOffer').value='Wait for it...';
+      window.offer = createOffer(stream);
+      window.peer = window.offer.peer;
+      window.offer.sdpPromise.then((sdp)=>{document.getElementById('localSdpOffer').value=sdp});
+      ">Create Offer</button><br>
+    <textarea style="width: 350px; height: 350px; white-space: pre-wrap;" id="localSdpOffer"></textarea><br>
+    Copy the above offer, give it to someone and wait for answer.<br>Paste answer below and hit the Set Answer buton.<br>
+    <textarea style="width: 350px; height: 350px; white-space: pre-wrap;" id="remoteSdpAnswer"></textarea><br>
+    <button onclick="
+      setAnswer(window.peer, document.getElementById('remoteSdpAnswer').value);
+      ">Set Answer</button><br>
+    </td>
+    <td>
+      <h1>Are you the answerer?</h1>
+      Past offerer's SDP below<br>
+      <textarea style="width: 350px; height: 350px; white-space: pre-wrap;" id="remoteSdpOffer"></textarea><br>
+      <button onclick="
+        window.peer = setOffer(document.getElementById('remoteSdpOffer').value);
+        ">Set Offer</button><br>
+      <button onclick="
+        document.getElementById('localSdpAnswer').value='Wait for it...';
+        createAnswer(window.peer, window.stream).then((sdp)=>{document.getElementById('localSdpAnswer').value=sdp})
+      ">Create Answer</button><br>
+      <textarea style="width: 350px; height: 350px; white-space: pre-wrap;" id="localSdpAnswer"></textarea><br>
+      Copy the above answer and paste it to whom you received the offer from.
+
+    </td>
+    </tr>
+    </table>
+
+    <script>
+    
+    var STUN = {
+                urls: 'stun:stun.l.google.com:19302'
+                };
+
+    var iceServers = {
+    //sdpSemantics: 'unified-plan',
+    //iceCandidatePoolSize: 2,
+      //iceServers: [STUN]
+    };
+
+    
+    async function getUserMedia(constraints, cb) {
+      let stream = null;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        //window.mediaStream = stream;
+        OnMediaSuccess(mediaStream, cb);
+      } catch (err) {
+        /* handle the error */
+        console.log(err);
+      }
+    }
+
+    function OnMediaSuccess(mediaStream, cb) {
+       if (cb != undefined) cb(mediaStream);
+    }
+
+    getUserMedia({"audio": true, "video": false}, function(mediaStream) {
+      window.stream = mediaStream
+    })
+
+    function setupTracksAndIce(mediaStream, peer, resolve) {
+      mediaStream.getTracks().forEach(function (track) {
+          console.log("Adding track: ")
+          console.log(track)
+          peer.addTrack(track, mediaStream);
+        });
+
+        mediaStream.onaddtrack = function (event) {
+          console.log("Track added");
+        };
+
+        peer.ontrack = function (mediaStream) {
+          console.log("ONADDSTREAM TRIGGERED");
+          var remoteVideo = document.getElementById('remoteAudio');
+          var localVideo = document.getElementById('localAudio');
+          var localStream = new MediaStream();
+          peer.getSenders().forEach(function (sender) {
+            localStream.addTrack(sender.track);
+          });
+          localVideo.srcObject = localStream;
+          localVideo.play();
+          var remoteStream = new MediaStream();
+          peer.getReceivers().forEach(function (receiver) {
+            remoteStream.addTrack(receiver.track);
+          });
+          remoteVideo.srcObject = remoteStream;
+          remoteVideo.play();
+        };
+
+        peer.onicegatheringstatechange = function () {
+          console.log(peer.iceGatheringState);
+          if (peer.iceGatheringState == "gathering") {
+            var iceTimer = setTimeout(function(){  //resolve earlier if ICE state not "complete"
+            resolve(peer.localDescription.sdp); }
+            , 3000);            
+          }
+          if (peer.iceGatheringState == "complete") {
+            console.log("iceGatheringState is complete");
+            resolve(peer.localDescription.sdp);
+          }
+        }
+    }
+
+    function createOffer(mediaStream){
+      peer = new RTCPeerConnection(iceServers, {});
+      return {"sdpPromise": new Promise((resolve, reject)=>{
+        setupTracksAndIce(mediaStream, peer, resolve)
+        peer.createOffer().then(function (offerSDP) {
+          //console.log("Creating offer with local SDP");
+          peer.setLocalDescription(offerSDP).then(function () {
+            //localOfferSDP = offerSDP; 
+            //console.log(peer.localDescription.sdp);
+            //if (cb != undefined) cb(peer.localDescription.sdp);
+            console.log("setLocalDescription succeeded");
+          }, function () {
+            console.log("setting local description failed")
+          });
+        });
+      }), "peer": peer}
+    }
+
+    function setAnswer(peer, remoteSdp) {
+      var remoteRTCSessionDescription = new RTCSessionDescription({ type: "answer", sdp: remoteSdp });
+      peer.setRemoteDescription(remoteRTCSessionDescription).then(function () { console.log("Sucessfully set remote SDP") }, function (err) { console.log(err) });
+    }
+
+    function setOffer(remoteSdp) {
+      peer = new RTCPeerConnection(iceServers, {});
+      var remoteRTCSessionDescription = new RTCSessionDescription({ type: "offer", sdp: remoteSdp });
+      peer.setRemoteDescription(remoteRTCSessionDescription).then(function () { console.log("Sucessfully set remote SDP") }, function (err) { console.log(err) });
+      return peer
+    }    
+
+    function createAnswer(peer, mediaStream){
+      return new Promise((resolve, reject)=>{
+        setupTracksAndIce(mediaStream, peer, resolve)
+        peer.createAnswer().then(function (offerSDP) {
+          //console.log("Creating offer with local SDP");
+          peer.setLocalDescription(offerSDP).then(function () {
+            //localOfferSDP = offerSDP; 
+            //console.log(peer.localDescription.sdp);
+            //if (cb != undefined) cb(peer.localDescription.sdp);
+            console.log("setLocalDescription succeeded");
+          }, function () {
+            console.log("setting local description failed")
+          });
+        });
+      });
+    }
+
+    </script>
 </body>
 </html>
