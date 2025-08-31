@@ -3,8 +3,8 @@ layout: home
 author_profile: true
 header:
   overlay_color: "#000"
-  overlay_filter: "0.5"
-  overlay_image: /assets/images/header-bg.jpg
+  overlay_filter: "0.6"
+  overlay_image: https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80
   actions:
     - label: "Read Latest Posts"
       url: "#latest-posts"
