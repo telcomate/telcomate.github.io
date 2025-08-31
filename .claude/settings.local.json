@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:docs.github.com)"
+      "WebFetch(domain:docs.github.com)",
+      "WebSearch",
+      "WebFetch(domain:cloudcannon.com)",
+      "WebFetch(domain:pages.github.com)"
     ],
     "deny": [],
     "ask": []

@@ -1,8 +1,17 @@
 ---
-layout: post
 title: "Welcome to Our Blog!"
 date: 2025-08-31
-categories: general
+categories: 
+  - general
+  - announcements
+tags:
+  - welcome
+  - jekyll
+  - github-pages
+excerpt: "Welcome to the Telcomate blog! We're excited to share insights about telecommunications technology, industry analysis, and technical innovation."
+header:
+  overlay_color: "#333"
+  teaser: /assets/images/welcome-teaser.jpg
 ---
 
 Welcome to the Telcomate blog! 🎉
