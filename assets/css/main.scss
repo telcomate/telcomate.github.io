@@ -1,0 +1,38 @@
+---
+---
+
+@import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
+@import "minimal-mistakes"; // main partials
+
+/* Custom header background with tech pattern */
+.page__hero--overlay {
+  background: linear-gradient(45deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.page__hero--overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(120, 160, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(120, 200, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 180, 255, 0.2) 0%, transparent 50%);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Enhanced text contrast */
+.page__hero .page__title,
+.page__hero .page__meta,
+.page__hero .page__lead {
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
